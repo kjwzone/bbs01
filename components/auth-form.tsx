@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { getSiteUrl } from "@/lib/supabase/env";
 
 type AuthMode = "login" | "signup";
 
@@ -26,10 +27,17 @@ export const AuthForm = ({ mode }: AuthFormProps) => {
     setLoading(true);
 
     const supabase = createClient();
+    const siteUrl = getSiteUrl();
     const result =
       mode === "login"
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: siteUrl
+              ? { emailRedirectTo: `${siteUrl}/auth/callback` }
+              : undefined,
+          });
 
     setLoading(false);
 
