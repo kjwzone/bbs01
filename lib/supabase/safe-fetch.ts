@@ -1,3 +1,5 @@
+const FETCH_TIMEOUT_MS = 20_000;
+
 const isLatin1 = (value: string): boolean => {
   for (let i = 0; i < value.length; i += 1) {
     if (value.charCodeAt(i) > 255) {
@@ -39,12 +41,24 @@ const sanitizeHeaders = (headers: HeadersInit | undefined): Headers | undefined 
   return output;
 };
 
-/** Drops header fields that are not ISO-8859-1 (fixes Windows non-ASCII host/cookie issues). */
+/** Drops non ISO-8859-1 headers and applies a request timeout. */
 export const safeFetch: typeof fetch = async (input, init) => {
-  if (!init?.headers) {
-    return fetch(input, init);
-  }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  const headers = sanitizeHeaders(init.headers);
-  return fetch(input, { ...init, headers });
+  const signal =
+    init?.signal !== undefined
+      ? init.signal
+      : controller.signal;
+
+  try {
+    if (!init?.headers) {
+      return await fetch(input, { ...init, signal });
+    }
+
+    const headers = sanitizeHeaders(init.headers);
+    return await fetch(input, { ...init, headers, signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };

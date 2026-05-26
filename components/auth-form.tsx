@@ -12,6 +12,26 @@ type AuthFormProps = {
   mode: AuthMode;
 };
 
+const AUTH_TIMEOUT_MS = 20_000;
+
+const withTimeout = async <T,>(
+  promise: Promise<T>,
+  message: string,
+): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), AUTH_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+};
+
 export const AuthForm = ({ mode }: AuthFormProps) => {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -26,35 +46,54 @@ export const AuthForm = ({ mode }: AuthFormProps) => {
     setMessage(null);
     setLoading(true);
 
-    const supabase = createClient();
-    const siteUrl = getSiteUrl();
-    const result =
-      mode === "login"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({
-            email,
-            password,
-            options: siteUrl
-              ? { emailRedirectTo: `${siteUrl}/auth/callback` }
-              : undefined,
-          });
+    try {
+      const supabase = createClient();
+      const siteUrl = getSiteUrl();
 
-    setLoading(false);
-
-    if (result.error) {
-      setError(result.error.message);
-      return;
-    }
-
-    if (mode === "signup" && !result.data.session) {
-      setMessage(
-        "가입 요청이 완료되었습니다. 이메일 확인이 켜져 있으면 메일함을 확인한 뒤 로그인하세요.",
+      const result = await withTimeout(
+        mode === "login"
+          ? supabase.auth.signInWithPassword({ email, password })
+          : supabase.auth.signUp({
+              email,
+              password,
+              options: siteUrl
+                ? { emailRedirectTo: `${siteUrl}/auth/callback` }
+                : undefined,
+            }),
+        "요청 시간이 초과되었습니다. 네트워크를 확인한 뒤 다시 시도하세요.",
       );
-      return;
-    }
 
-    router.push("/");
-    router.refresh();
+      if (result.error) {
+        const msg = result.error.message;
+        if (msg.toLowerCase().includes("email not confirmed")) {
+          setError(
+            "이메일 인증이 필요합니다. 메일함의 확인 링크를 누른 뒤 다시 로그인하세요.",
+          );
+        } else {
+          setError(msg);
+        }
+        return;
+      }
+
+      if (mode === "signup" && !result.data.session) {
+        setMessage(
+          "가입 요청이 완료되었습니다. 이메일 확인이 켜져 있으면 메일함을 확인한 뒤 로그인하세요.",
+        );
+        return;
+      }
+
+      // Full navigation ensures cookies are applied before SSR reads session
+      window.location.assign("/");
+    } catch (caught) {
+      const msg =
+        caught instanceof Error
+          ? caught.message
+          : "로그인 처리 중 오류가 발생했습니다.";
+      setError(msg);
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

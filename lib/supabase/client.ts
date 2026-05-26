@@ -5,6 +5,13 @@ import { safeFetch } from "@/lib/supabase/safe-fetch";
 
 let browserClient: ReturnType<typeof createBrowserClient<Database>> | undefined;
 
+/** Avoid navigator.lock deadlock with Next.js middleware on Windows. */
+const lockNoOp = async <T>(
+  _name: string,
+  _acquireTimeout: number,
+  fn: () => Promise<T>,
+): Promise<T> => fn();
+
 export const createClient = () => {
   if (browserClient) {
     return browserClient;
@@ -16,6 +23,10 @@ export const createClient = () => {
     {
       global: {
         fetch: safeFetch,
+      },
+      auth: {
+        lock: lockNoOp,
+        lockAcquireTimeout: 5000,
       },
     },
   );
