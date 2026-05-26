@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "vercel:deploy": "node -r ./scripts/vercel-patch.cjs ./node_modules/vercel/dist/vc.js deploy --prod --yes"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -22,6 +23,7 @@
     "@types/react": "^19.2.7",
     "@vitejs/plugin-react": "^5.1.1",
     "typescript": "^5.9.3",
+    "vercel": "^54.4.1",
     "vitest": "^4.0.14"
   }
 }

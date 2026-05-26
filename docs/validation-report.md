@@ -7,7 +7,7 @@
 | 기준 문서 | docs/test-plan.md, docs/prd.md, docs/rdb-design.md |
 | 검증 일시 | 2026-05-26 |
 | 환경 | Cloud Supabase (`zbwonlldqnayfwhksnwi`), 로컬 Next.js 15.5.18 |
-| Vercel 배포 | **미실행** (DEPLOY-* Pending) |
+| Vercel 배포 | **완료** — https://bbs01-chi.vercel.app |
 | 검증자 | Cursor Agent + 자동 스크립트 + 빌드/단위 테스트 |
 
 ## 2. 자동 검증 요약
@@ -32,8 +32,8 @@
 | POST-002 | **Pending** | API: AUTH-001 실패로 insert 미실행 | rate limit | 로그인 후 `/posts/new` 작성 | — |
 | POST-003 | **Pending** | UI/API 미실행 | rate limit | 본인 글 `/posts/[id]/edit` | — |
 | POST-004 | **Pending** | UI/API 미실행 | rate limit | 본인 글 삭제 버튼 | — |
-| DEPLOY-001 | **Pending** | Vercel URL 없음 | 미배포 | Vercel 배포 후 목록 확인 | — |
-| DEPLOY-002 | **Pending** | Vercel URL 없음 | 미배포 | 배포 URL에서 로그인·작성 | — |
+| DEPLOY-001 | **Pass** | `GET https://bbs01-chi.vercel.app` 200, 게시판 UI | — | — | Pass |
+| DEPLOY-002 | **Pending** | 프로덕션 URL에서 Auth·작성 수동 확인 필요 | — | 로그인 후 글 작성 | — |
 
 ### 3.2 실패해야 정상인 테스트 (RLS·제약)
 
@@ -113,6 +113,6 @@ Auth rate limit 해소 후 `npm run dev` (http://localhost:3000):
 | 앱 validation | **Pass** — Vitest 6건 |
 | 프로덕션 빌드 | **Pass** |
 | Auth·작성자 CRUD (E2E) | **Pending** — Supabase Auth rate limit + 수동 UI 미완 |
-| Vercel 배포 | **Pending** |
+| Vercel 배포 | **Pass** (URL 배포·빌드 성공; Auth E2E는 Pending) |
 
 **다음 조치:** (1) Auth rate limit 대기 또는 Dashboard 확인 (2) §7 수동 체크리스트 실행 (3) Vercel 배포 후 DEPLOY-* 재기록.

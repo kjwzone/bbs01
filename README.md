@@ -13,6 +13,8 @@ npm run dev
 
 ## Vercel 배포
 
+**Production:** https://bbs01-chi.vercel.app
+
 ### 방법 1: Dashboard (권장)
 
 1. [GitHub 저장소 import](https://vercel.com/new/clone?repository-url=https://github.com/kjwzone/bbs01) 열기
@@ -25,10 +27,10 @@ npm run dev
 
 ```bash
 vercel login
-vercel --prod
+npm run vercel:deploy
 ```
 
-> Windows에서 PC 이름·사용자명에 한글이 있으면 CLI가 `not a legal HTTP header value` 오류를 낼 수 있습니다. 이 경우 방법 1을 사용하세요.
+> Windows에서 PC 이름·사용자명에 한글이 있으면 `vercel` 단독 실행 시 오류가 날 수 있습니다. `npm run vercel:deploy`는 `scripts/vercel-patch.cjs`로 우회합니다.
 
 ## Supabase Auth (배포 후)
 
